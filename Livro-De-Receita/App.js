@@ -9,7 +9,7 @@ import {
   Modal,
   Alert,
   TouchableWithoutFeedback,
-  Keyboard, // Importando a API Keyboard
+  Keyboard,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -22,7 +22,7 @@ export default function App() {
     ingredients: "",
     time: "",
   });
-  const [editingIndex, setEditingIndex] = useState(null); // Para saber qual receita estamos editando
+  const [editingIndex, setEditingIndex] = useState(null);
 
   useEffect(() => {
     const loadRecipes = async () => {
@@ -41,7 +41,7 @@ export default function App() {
     saveRecipes();
   }, [recipes]);
 
-  const handleAddRecipe = () => {
+  const handleSaveRecipe = () => {
     if (!newRecipe.title || !newRecipe.ingredients || !newRecipe.time) {
       Alert.alert("Erro", "Por favor, preencha todos os campos!");
       return;
@@ -54,17 +54,15 @@ export default function App() {
     };
 
     if (editingIndex !== null) {
-      // Editando uma receita existente
       const updatedRecipes = [...recipes];
       updatedRecipes[editingIndex] = recipe;
       setRecipes(updatedRecipes);
     } else {
-      // Adicionando nova receita
       setRecipes([...recipes, recipe]);
     }
 
     setNewRecipe({ title: "", ingredients: "", time: "" });
-    setEditingIndex(null); // Reseta a edição
+    setEditingIndex(null);
     setModalVisible(false);
   };
 
@@ -96,8 +94,8 @@ export default function App() {
       ingredients: recipeToEdit.ingredients.join(", "),
       time: recipeToEdit.time.replace(" MIN", ""),
     });
-    setEditingIndex(index); // Define qual receita será editada
-    setModalVisible(true); // Abre o modal de edição
+    setEditingIndex(index);
+    setModalVisible(true);
   };
 
   const filteredRecipes = recipes.filter((recipe) =>
@@ -105,31 +103,37 @@ export default function App() {
   );
 
   return (
-    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}> 
-      {/* Fechar teclado ao tocar fora dos campos, EXCLUINDO o modal */}
+    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
       <View style={styles.container}>
         <Text style={styles.header}>LIVRO DE RECEITAS</Text>
+        
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => setModalVisible(true)}
+          onPress={() => {
+            setEditingIndex(null);
+            setNewRecipe({ title: "", ingredients: "", time: "" });
+            setModalVisible(true);
+          }}
         >
           <Text style={styles.addButtonText}>+ NOVA RECEITA</Text>
         </TouchableOpacity>
+        
         <TextInput
           style={styles.searchInput}
-          placeholder="SEARCH"
+          placeholder="BUSCAR RECEITA"
           value={search}
           onChangeText={setSearch}
           placeholderTextColor="#D1A699"
         />
+        
         <FlatList
           data={filteredRecipes}
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item, index }) => (
             <TouchableOpacity
               style={styles.recipeCard}
-              onPress={() => handleEditRecipe(index)} // Edição
-              onLongPress={() => handleDeleteRecipe(index)} // Exclusão
+              onPress={() => handleEditRecipe(index)}
+              onLongPress={() => handleDeleteRecipe(index)}
             >
               <Text style={styles.recipeTitle}>♥ {item.title}</Text>
               {item.ingredients.map((ingredient, i) => (
@@ -144,15 +148,14 @@ export default function App() {
           )}
         />
 
-        {/* Modal para adicionar ou editar receita */}
         <Modal visible={modalVisible} animationType="slide" transparent={true}>
-          <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}> 
-            {/* Fechar teclado quando clicar fora do modal */}
+          <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
             <View style={styles.modalContainer}>
               <View style={styles.modalContent}>
                 <Text style={styles.modalTitle}>
                   {editingIndex !== null ? "Editar Receita" : "Adicionar Receita"}
                 </Text>
+                
                 <TextInput
                   style={styles.input}
                   placeholder="Título da Receita"
@@ -164,9 +167,7 @@ export default function App() {
                   style={styles.input}
                   placeholder="Ingredientes (separados por vírgula)"
                   value={newRecipe.ingredients}
-                  onChangeText={(text) =>
-                    setNewRecipe({ ...newRecipe, ingredients: text })
-                  }
+                  onChangeText={(text) => setNewRecipe({ ...newRecipe, ingredients: text })}
                   placeholderTextColor="#D1A699"
                   multiline
                 />
@@ -178,10 +179,11 @@ export default function App() {
                   placeholderTextColor="#D1A699"
                   keyboardType="numeric"
                 />
+                
                 <View style={styles.modalButtons}>
                   <TouchableOpacity
                     style={styles.saveButton}
-                    onPress={handleAddRecipe}
+                    onPress={handleSaveRecipe}
                   >
                     <Text style={styles.saveButtonText}>
                       {editingIndex !== null ? "Salvar Alterações" : "Salvar"}

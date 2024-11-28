@@ -14,59 +14,59 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function App() {
-  const [recipes, setRecipes] = useState([]);
-  const [search, setSearch] = useState("");
-  const [modalVisible, setModalVisible] = useState(false);
-  const [newRecipe, setNewRecipe] = useState({
-    title: "",
-    ingredients: "",
-    time: "",
+  const [receitas, setReceitas] = useState([]);
+  const [busca, setBusca] = useState("");
+  const [modalVisivel, setModalVisivel] = useState(false);
+  const [novaReceita, setNovaReceita] = useState({
+    titulo: "",
+    ingredientes: "",
+    tempo: "",
   });
-  const [editingIndex, setEditingIndex] = useState(null);
+  const [indiceEdicao, setIndiceEdicao] = useState(null);
 
   useEffect(() => {
-    const loadRecipes = async () => {
-      const storedRecipes = await AsyncStorage.getItem("recipes");
-      if (storedRecipes) {
-        setRecipes(JSON.parse(storedRecipes));
+    const carregarReceitas = async () => {
+      const receitasArmazenadas = await AsyncStorage.getItem("receitas");
+      if (receitasArmazenadas) {
+        setReceitas(JSON.parse(receitasArmazenadas));
       }
     };
-    loadRecipes();
+    carregarReceitas();
   }, []);
 
   useEffect(() => {
-    const saveRecipes = async () => {
-      await AsyncStorage.setItem("recipes", JSON.stringify(recipes));
+    const salvarReceitas = async () => {
+      await AsyncStorage.setItem("receitas", JSON.stringify(receitas));
     };
-    saveRecipes();
-  }, [recipes]);
+    salvarReceitas();
+  }, [receitas]);
 
-  const handleSaveRecipe = () => {
-    if (!newRecipe.title || !newRecipe.ingredients || !newRecipe.time) {
+  const salvarNovaReceita = () => {
+    if (!novaReceita.titulo || !novaReceita.ingredientes || !novaReceita.tempo) {
       Alert.alert("Erro", "Por favor, preencha todos os campos!");
       return;
     }
 
-    const recipe = {
-      title: newRecipe.title,
-      ingredients: newRecipe.ingredients.split(",").map((item) => item.trim()),
-      time: `${newRecipe.time} MIN`,
+    const receita = {
+      titulo: novaReceita.titulo,
+      ingredientes: novaReceita.ingredientes.split(",").map((item) => item.trim()),
+      tempo: `${novaReceita.tempo} MIN`,
     };
 
-    if (editingIndex !== null) {
-      const updatedRecipes = [...recipes];
-      updatedRecipes[editingIndex] = recipe;
-      setRecipes(updatedRecipes);
+    if (indiceEdicao !== null) {
+      const receitasAtualizadas = [...receitas];
+      receitasAtualizadas[indiceEdicao] = receita;
+      setReceitas(receitasAtualizadas);
     } else {
-      setRecipes([...recipes, recipe]);
+      setReceitas([...receitas, receita]);
     }
 
-    setNewRecipe({ title: "", ingredients: "", time: "" });
-    setEditingIndex(null);
-    setModalVisible(false);
+    setNovaReceita({ titulo: "", ingredientes: "", tempo: "" });
+    setIndiceEdicao(null);
+    setModalVisivel(false);
   };
 
-  const handleDeleteRecipe = (index) => {
+  const deletarReceita = (indice) => {
     Alert.alert(
       "Apagar Receita",
       "Tem certeza que deseja apagar esta receita?",
@@ -79,121 +79,121 @@ export default function App() {
           text: "Apagar",
           style: "destructive",
           onPress: () => {
-            const updatedRecipes = recipes.filter((_, i) => i !== index);
-            setRecipes(updatedRecipes);
+            const receitasAtualizadas = receitas.filter((_, i) => i !== indice);
+            setReceitas(receitasAtualizadas);
           },
         },
       ]
     );
   };
 
-  const handleEditRecipe = (index) => {
-    const recipeToEdit = recipes[index];
-    setNewRecipe({
-      title: recipeToEdit.title,
-      ingredients: recipeToEdit.ingredients.join(", "),
-      time: recipeToEdit.time.replace(" MIN", ""),
+  const editarReceita = (indice) => {
+    const receitaEditar = receitas[indice];
+    setNovaReceita({
+      titulo: receitaEditar.titulo,
+      ingredientes: receitaEditar.ingredientes.join(", "),
+      tempo: receitaEditar.tempo.replace(" MIN", ""),
     });
-    setEditingIndex(index);
-    setModalVisible(true);
+    setIndiceEdicao(indice);
+    setModalVisivel(true);
   };
 
-  const filteredRecipes = recipes.filter((recipe) =>
-    recipe.title.toLowerCase().includes(search.toLowerCase())
+  const receitasFiltradas = receitas.filter((receita) =>
+    receita.titulo.toLowerCase().includes(busca.toLowerCase())
   );
 
   return (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-      <View style={styles.container}>
-        <Text style={styles.header}>LIVRO DE RECEITAS</Text>
+      <View style={estilos.container}>
+        <Text style={estilos.cabecalho}>LIVRO DE RECEITAS</Text>
         
         <TouchableOpacity
-          style={styles.addButton}
+          style={estilos.botaoAdicionar}
           onPress={() => {
-            setEditingIndex(null);
-            setNewRecipe({ title: "", ingredients: "", time: "" });
-            setModalVisible(true);
+            setIndiceEdicao(null);
+            setNovaReceita({ titulo: "", ingredientes: "", tempo: "" });
+            setModalVisivel(true);
           }}
         >
-          <Text style={styles.addButtonText}>+ NOVA RECEITA</Text>
+          <Text style={estilos.textoBotaoAdicionar}>+ NOVA RECEITA</Text>
         </TouchableOpacity>
         
         <TextInput
-          style={styles.searchInput}
+          style={estilos.campoBusca}
           placeholder="BUSCAR RECEITA"
-          value={search}
-          onChangeText={setSearch}
+          value={busca}
+          onChangeText={setBusca}
           placeholderTextColor="#D1A699"
         />
         
         <FlatList
-          data={filteredRecipes}
+          data={receitasFiltradas}
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item, index }) => (
             <TouchableOpacity
-              style={styles.recipeCard}
-              onPress={() => handleEditRecipe(index)}
-              onLongPress={() => handleDeleteRecipe(index)}
+              style={estilos.cartaoReceita}
+              onPress={() => editarReceita(index)}
+              onLongPress={() => deletarReceita(index)}
             >
-              <Text style={styles.recipeTitle}>♥ {item.title}</Text>
-              {item.ingredients.map((ingredient, i) => (
-                <Text key={i} style={styles.ingredientItem}>
-                  • {ingredient}
+              <Text style={estilos.tituloReceita}>♥ {item.titulo}</Text>
+              {item.ingredientes.map((ingrediente, i) => (
+                <Text key={i} style={estilos.itemIngrediente}>
+                  • {ingrediente}
                 </Text>
               ))}
-              <View style={styles.timeContainer}>
-                <Text style={styles.timeText}>{item.time}</Text>
+              <View style={estilos.containerTempo}>
+                <Text style={estilos.textoTempo}>{item.tempo}</Text>
               </View>
             </TouchableOpacity>
           )}
         />
 
-        <Modal visible={modalVisible} animationType="slide" transparent={true}>
+        <Modal visible={modalVisivel} animationType="slide" transparent={true}>
           <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>
-                  {editingIndex !== null ? "Editar Receita" : "Adicionar Receita"}
+            <View style={estilos.containerModal}>
+              <View style={estilos.conteudoModal}>
+                <Text style={estilos.tituloModal}>
+                  {indiceEdicao !== null ? "Editar Receita" : "Adicionar Receita"}
                 </Text>
                 
                 <TextInput
-                  style={styles.input}
+                  style={estilos.input}
                   placeholder="Título da Receita"
-                  value={newRecipe.title}
-                  onChangeText={(text) => setNewRecipe({ ...newRecipe, title: text })}
+                  value={novaReceita.titulo}
+                  onChangeText={(text) => setNovaReceita({ ...novaReceita, titulo: text })}
                   placeholderTextColor="#D1A699"
                 />
                 <TextInput
-                  style={styles.input}
+                  style={estilos.input}
                   placeholder="Ingredientes (separados por vírgula)"
-                  value={newRecipe.ingredients}
-                  onChangeText={(text) => setNewRecipe({ ...newRecipe, ingredients: text })}
+                  value={novaReceita.ingredientes}
+                  onChangeText={(text) => setNovaReceita({ ...novaReceita, ingredientes: text })}
                   placeholderTextColor="#D1A699"
                   multiline
                 />
                 <TextInput
-                  style={styles.input}
+                  style={estilos.input}
                   placeholder="Tempo (em minutos)"
-                  value={newRecipe.time}
-                  onChangeText={(text) => setNewRecipe({ ...newRecipe, time: text })}
+                  value={novaReceita.tempo}
+                  onChangeText={(text) => setNovaReceita({ ...novaReceita, tempo: text })}
                   placeholderTextColor="#D1A699"
                   keyboardType="numeric"
                 />
                 
-                <View style={styles.modalButtons}>
+                <View style={estilos.botoesModal}>
                   <TouchableOpacity
-                    style={styles.saveButton}
-                    onPress={handleSaveRecipe}
+                    style={estilos.botaoSalvar}
+                    onPress={salvarNovaReceita}
                   >
-                    <Text style={styles.saveButtonText}>
-                      {editingIndex !== null ? "Salvar Alterações" : "Salvar"}
+                    <Text style={estilos.textoBotaoSalvar}>
+                      {indiceEdicao !== null ? "Salvar Alterações" : "Salvar"}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() => setModalVisible(false)}
+                    style={estilos.botaoCancelar}
+                    onPress={() => setModalVisivel(false)}
                   >
-                    <Text style={styles.cancelButtonText}>Cancelar</Text>
+                    <Text style={estilos.textoBotaoCancelar}>Cancelar</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -205,33 +205,33 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({
+const estilos = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FDEDE0",
     paddingHorizontal: 20,
     paddingTop: 50,
   },
-  header: {
+  cabecalho: {
     fontSize: 26,
     fontWeight: "bold",
     color: "#8E4C30",
     marginTop: 10,
     marginBottom: 20,
   },
-  addButton: {
+  botaoAdicionar: {
     alignSelf: "flex-end",
     backgroundColor: "#F9A826",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 20,
   },
-  addButtonText: {
+  textoBotaoAdicionar: {
     color: "#FFF",
     fontWeight: "bold",
     fontSize: 14,
   },
-  searchInput: {
+  campoBusca: {
     backgroundColor: "#FDE5D5",
     padding: 10,
     borderRadius: 10,
@@ -239,24 +239,24 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: "#8E4C30",
   },
-  recipeCard: {
+  cartaoReceita: {
     backgroundColor: "#F9CBB6",
     padding: 20,
     borderRadius: 15,
     marginBottom: 15,
   },
-  recipeTitle: {
+  tituloReceita: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#8E4C30",
     marginBottom: 10,
   },
-  ingredientItem: {
+  itemIngrediente: {
     color: "#8E4C30",
     fontSize: 14,
     marginLeft: 10,
   },
-  timeContainer: {
+  containerTempo: {
     alignSelf: "flex-end",
     backgroundColor: "#FFDCA8",
     paddingHorizontal: 15,
@@ -264,23 +264,23 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     marginTop: 10,
   },
-  timeText: {
+  textoTempo: {
     fontWeight: "bold",
     color: "#8E4C30",
   },
-  modalContainer: {
+  containerModal: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
   },
-  modalContent: {
+  conteudoModal: {
     backgroundColor: "#FDEDE0",
     padding: 20,
     borderRadius: 15,
     width: "80%",
   },
-  modalTitle: {
+  tituloModal: {
     fontSize: 20,
     fontWeight: "bold",
     color: "#8E4C30",
@@ -294,27 +294,27 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: "#8E4C30",
   },
-  modalButtons: {
+  botoesModal: {
     flexDirection: "row",
     justifyContent: "space-between",
   },
-  saveButton: {
+  botaoSalvar: {
     backgroundColor: "#F9A826",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 10,
   },
-  saveButtonText: {
+  textoBotaoSalvar: {
     color: "#FFF",
     fontWeight: "bold",
   },
-  cancelButton: {
+  botaoCancelar: {
     backgroundColor: "#8E4C30",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 10,
   },
-  cancelButtonText: {
+  textoBotaoCancelar: {
     color: "#FFF",
     fontWeight: "bold",
   },
